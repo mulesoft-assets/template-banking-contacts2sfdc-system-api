@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc"
+	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
+
+ <flow name="getContactFlow">
+        <sfdc:query-single config-ref="Salesforce__Basic_Authentication" query="dsql:SELECT Id, FirstName, LastName, MailingStreet, MailingCity, MailingPostalCode, MailingState, MailingCountry, Phone, Email, BirthDate FROM Contact WHERE Email = '#[message.inboundProperties[&quot;http.query.params&quot;].email]'" doc:name="Get Contact"/>
+        <choice doc:name="Does Contact Exist?">
+            <when expression="#[payload != empty]">
+                <json:object-to-json-transformer doc:name="Transform output to Json"/>
+            </when>
+            <otherwise>
+                <set-property propertyName="http.status" value="#[404]" doc:name="Resource Not Found"/>
+                <set-payload value="{ &quot;message&quot;: &quot;Resource not found&quot; }" doc:name="Resource not found"/>
+            </otherwise>
+        </choice>
+    </flow>
+    <flow name="postContactFlow">
+        <set-property propertyName="Content-Type" value="application/json" doc:name="Set Content Type"/>
+        <dw:transform-message doc:name="Map input to Salesforce Contact" metadata:id="ea42dff6-d450-4136-b292-8abf3238f2f9">
+            <dw:input-payload mimeType="application/json"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	FirstName: payload.firstName,
+	LastName: payload.lastName,
+	MailingStreet: payload.address.street,
+	MailingCity: payload.address.city,
+	MailingPostalCode: payload.address.zipCode,
+	MailingState: payload.address.state,
+	MailingCountry: payload.address.country,
+	Phone: payload.phone,
+	Email: payload.email
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <sfdc:create-single config-ref="Salesforce__Basic_Authentication" type="Contact" doc:name="Create New Contact">
+            <sfdc:object ref="#[payload]"/>
+        </sfdc:create-single>
+        <logger message="#[payload]" level="INFO" doc:name="Log Information"/>
+        <set-property propertyName="http.status" value="#[201]" doc:name="Set Status"/>
+        <set-payload value="{ &quot;message&quot;: &quot;Contact was created&quot; }" doc:name="Set Payload"/>
+
+
+    </flow>
+<flow name="putContactFlow">
+        <dw:transform-message doc:name="Input transform">
+        	<dw:input-payload mimeType="application/json"/>
+            <dw:set-variable variableName="updatedContact"><![CDATA[%dw 1.0
+%output application/java
+---
+payload]]></dw:set-variable>
+        </dw:transform-message>
+        <sfdc:query-single config-ref="Salesforce__Basic_Authentication" query="dsql:SELECT Id FROM Contact WHERE Email='#[message.inboundProperties[&quot;http.query.params&quot;].email]'" doc:name="Query Single Contact"/>
+
+
+        <choice doc:name="Does Contact Exist?">
+            <when expression="#[payload != empty]">
+                <dw:transform-message metadata:id="f64041c7-f234-4221-9b3f-9866ecfabfa3" doc:name="sAPI Contact to Salesforce Contact">
+                    <dw:input-payload/>
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	Id: payload.Id,
+    FirstName: flowVars.updatedContact.firstName,
+	LastName: flowVars.updatedContact.lastName,
+	MailingStreet: flowVars.updatedContact.address.street,
+	MailingCity: flowVars.updatedContact.address.city,
+	MailingPostalCode: flowVars.updatedContact.address.zipCode,
+	MailingState: flowVars.updatedContact.address.state,
+	MailingCountry: flowVars.updatedContact.address.country,
+	Phone: flowVars.updatedContact.phone
+}]]></dw:set-payload>
+                </dw:transform-message>
+
+                <sfdc:update-single config-ref="Salesforce__Basic_Authentication" type="Contact" doc:name="Update Single Contact">
+                    <sfdc:object ref="#[payload]"/>
+                </sfdc:update-single>
+                <logger message="Updated successful" level="INFO" doc:name="Log success"/>
+
+            </when>
+            <otherwise>
+
+                <set-property propertyName="http.status" value="#[404]" doc:name="Resource Not Found"/>
+                <set-payload value="{ &quot;message&quot;: &quot;Resource not found&quot; }" doc:name="Resource not found"/>
+                <logger message="#[payload]" level="INFO" doc:name="Log 404"/>
+            </otherwise>
+        </choice>
+    </flow>
+
+</mule>
+

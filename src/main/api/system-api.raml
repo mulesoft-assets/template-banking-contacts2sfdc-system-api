@@ -1,0 +1,63 @@
+#%RAML 1.0
+title: Customers Contact System API
+version: v1.0
+
+types: 
+  address: 
+    type: object
+    properties:
+      street?: string
+      city?: string
+      zipCode?: string
+      state?: string
+      country?: string
+  contact:
+    type: object
+    properties:
+      id?: string
+      firstName?: string
+      lastName?: string
+      address?: address
+      phone?: string
+      email?: string 
+  
+/contact:
+  displayName: Customer contact
+  get:
+    description: Return contact information 
+    queryParameters:
+      email:
+        type: string
+        example: "pablo@pablo.com"
+    responses:
+      200: 
+        body:
+          application/json:
+            example: !include examples/get_contact_example.json
+      
+  post:
+    description: Create customer contact  
+    body:
+      application/json:
+        example: !include examples/post_contact_example.json
+    queryParameters:
+      email:
+        type: string
+        example: "pablo@pablo.com"
+    responses:
+      201:
+        
+     
+  put:
+    description: Update customer contact by email
+    queryParameters:
+      email:
+        type: string
+        example: "pablo@pablo.com"   
+    body:
+      application/json:
+        example: !include examples/put_contact_example.json 
+    responses:
+      200:
+
+                      

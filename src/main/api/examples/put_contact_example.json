@@ -1,0 +1,12 @@
+{
+    "firstName": "Pablo",
+    "lastName": "M.",
+    "address": {
+        "street": "buenos",
+        "city": "buanos aires",
+        "zipCode": "55151",
+        "state": "argentina",
+        "country": "argentina"
+    },
+    "phone": "52155654"
+}

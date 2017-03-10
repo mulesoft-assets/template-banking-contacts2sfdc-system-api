@@ -1,4 +1,4 @@
-# Template Banking Accounts Process API
+# Template Banking Salesforce Contact System API
 
 + [License Agreement](#licenseagreement)
 + [Use Case](#usecase)
@@ -85,7 +85,7 @@ In order to use this Mule Anypoint Template you need to configure properties (Cr
 
 Detailed list with examples:
 ### Application properties
-+ http.port `8081`
++ https.port `8081`
 + keystore.location `keystore.jks`
 + keystore.password `pass123!`
 + key.password `pass123!`
@@ -95,6 +95,6 @@ Detailed list with examples:
 + sfdc.username `example@example.com`
 + sfdc.password `examplepass1`
 + sfdc.securityToken `eXample1111111`
-+ sfdc.url `https://login.salesforce.com/services/Soap/u/32.0`
++ sfdc.url `https://login.salesforce.com/services/Soap/u/38.0`
 
 

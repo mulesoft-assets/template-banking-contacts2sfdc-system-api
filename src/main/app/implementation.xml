@@ -65,7 +65,7 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
         </sfdc:create-single>
         <logger message="#[payload]" level="INFO" doc:name="Log Information"/>
         <set-property propertyName="http.status" value="#[201]" doc:name="Set Status"/>
-        <set-payload value="{ &quot;message&quot;: &quot;Contact was created&quot; }" doc:name="Set Payload"/>
+        <set-payload value="{ &quot;message&quot;: &quot;Contact was created&quot; }" doc:name="Set Message"/>
 
 
     </flow>

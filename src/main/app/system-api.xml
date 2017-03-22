@@ -16,7 +16,9 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
 
    
     <apikit:config name="system-api-config" raml="system-api.raml" consoleEnabled="true"   keepRamlBaseUri="false" doc:name="Router"/>
-    <sfdc:config name="Salesforce__Basic_Authentication" username="${sfdc.username}" password="${sfdc.password}" doc:name="Salesforce: Basic Authentication" securityToken="${sfdc.securityToken}" url="${sfdc.url}"/>
+    <sfdc:config name="Salesforce__Basic_Authentication" username="${sfdc.username}" password="${sfdc.password}" doc:name="Salesforce: Basic Authentication" securityToken="${sfdc.securityToken}" url="${sfdc.url}">
+        <reconnect/>
+    </sfdc:config>
     <flow name="api-main">
         <http:listener config-ref="http-Listener-Config" path="/api/*" doc:name="HTTP"/>
         <apikit:router config-ref="system-api-config" doc:name="APIkit Router"/>

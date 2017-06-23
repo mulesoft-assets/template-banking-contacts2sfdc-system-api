@@ -114,6 +114,16 @@ payload]]></dw:set-variable>
             </otherwise>
         </choice>
     </flow>
+    <flow name="deleteContactFlow">
+        <sfdc:query-single config-ref="Salesforce__Basic_Authentication"  doc:name="Query Contact ID by Email" query="dsql:SELECT Id FROM Contact WHERE Email='#[message.inboundProperties[&quot;http.query.params&quot;].email]'"/>
+        <logger message="Contact to delete: Id: #[payload.Id], Type: #[payload.type] " level="INFO" doc:name="Log Contact to Delete"/>
+        <sfdc:delete config-ref="Salesforce__Basic_Authentication" doc:name="Delete Contact by ID">
+            <sfdc:ids >
+                <sfdc:id>#[payload.Id]</sfdc:id>
+            </sfdc:ids>
+        </sfdc:delete>
+        <logger message="Successfully deleted" level="INFO" doc:name="Successfully deleted"/>
+    </flow>
 
 </mule>
 

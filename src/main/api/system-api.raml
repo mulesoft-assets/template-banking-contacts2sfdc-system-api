@@ -60,5 +60,14 @@ types:
         example: !include examples/put_contact_example.json 
     responses:
       200:
+      
+  delete:
+    description: Delete customer contact by email
+    queryParameters:
+      email:
+        type: string
+        example: "pablo@pablo.com"
+    responses:
+      200:
 
-                      
+      

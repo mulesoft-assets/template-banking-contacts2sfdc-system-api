@@ -35,6 +35,10 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
 <flow name="put:/contact:system-api-config">
         <flow-ref name="putContactFlow" doc:name="putContactFlow"/>
     </flow>
+    
+    <flow name="delete:/contact:system-api-config">
+        <flow-ref name="deleteContactFlow" doc:name="deleteContactFlow"/>
+    </flow>
 
 
     <apikit:mapping-exception-strategy name="apiKitGlobalExceptionMapping">

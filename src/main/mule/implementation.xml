@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+	http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+
+	<flow name="getContactFlow" doc:id="b83ddcce-95a1-4997-a01e-7ac5a2fca166">
+		<salesforce:query doc:name="Get Contact"
+			doc:id="8fbc4042-b891-4f49-a07b-cf92284caa7e" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query>SELECT Id, FirstName, LastName,
+				MailingStreet, MailingCity, MailingPostalCode, MailingState,
+				MailingCountry, Phone, Email FROM Contact WHERE Email = ':Email'
+			</salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output applicaton/java
+---
+{
+	"Email" : attributes.queryParams.email
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<choice doc:name="Does Contact Exist?" doc:id="cd5bd055-98a7-4246-a271-b386e7c8117c">
+			<when expression="#[sizeOf(payload) != 0]">
+				<ee:transform doc:name="Create JSON response"
+					doc:id="6778d80f-dc74-46c0-8fad-8643ffc5e4a9">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map {
+	FirstName: $.FirstName,
+	LastName: $.LastName,
+	Address: {
+		street: $.MailingStreet,
+		city: $.MailingCity,
+		zipCode: $.MailingPostalCode,
+		state: $.MailingState,
+		country: $.MailingCountry
+	},
+	phone: $.Phone
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Create JSON response"
+					doc:id="3fc530ed-e14c-4f16-a6ac-47c26d1457aa"
+					xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Resource not found"
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus"><![CDATA[404]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</otherwise>
+		</choice>
+
+
+	</flow>
+
+	<flow name="postContactFlow">
+		<ee:transform doc:name="Map input to sfdc Account"
+			doc:id="182483b7-b5c8-434c-8864-d7cfbbc6ef39">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	FirstName: payload.first_name,
+	LastName: payload.last_name,
+	MailingStreet: payload.address.address_line_1,
+	MailingCity: payload.address.city,
+	MailingPostalCode: payload.address.zip_code,
+	MailingState: payload.address.state,
+	MailingCountry: payload.address.country,
+	Phone: payload.phone,
+	Email: payload.email
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create-single config-ref="Salesforce_Config"
+			type="Contact" doc:name="Create Account" doc:id="de62d54c-1bd9-44c1-a76d-e4de44993d50" />
+		<logger level="INFO" doc:name="Logger"
+			doc:id="5d0464aa-efa8-4c1e-95d8-5562e2c001b6" message="#[output application/json --- payload]" />
+		<ee:transform doc:name="Create JSON response"
+			doc:id="3fc530ed-e14c-4f16-a6ac-47c26d1457aa"
+			xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Contact was created",
+  id: payload.id
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="httpStatus"><![CDATA[201]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+
+	</flow>
+	<flow name="putContactFlow" doc:id="b83ddcce-95a1-4997-a01e-7ac5a2fca166">
+		<ee:transform doc:name="Input transform"
+			doc:id="123302f9-bbcd-42d8-a29f-0b59d60d4800">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="updatedContact"><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<salesforce:query doc:name="Query Contact ID by Email"
+			doc:id="8fbc4042-b891-4f49-a07b-cf92284caa7e" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query>SELECT Id FROM Contact WHERE Email =
+				':Email' Limit 1</salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output applicaton/java
+---
+{
+	"Email" : attributes.queryParams.email
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<choice doc:name="Does user with the login exist?" doc:id="cd5bd055-98a7-4246-a271-b386e7c8117c">
+			<when expression="#[sizeOf(payload) != 0]">
+				<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+					xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd"
+					doc:id="f36857db-efab-43e3-85e8-97f68ece0680" doc:name="API Contact to Salesforce Contact">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{	
+	Id: payload.Id[0],
+    FirstName: vars.updatedContact.first_name,
+	LastName: vars.updatedContact.last_name,
+	MailingStreet: vars.updatedContact.address.address_line_1,
+	MailingCity: vars.updatedContact.address.city,
+	MailingPostalCode: vars.updatedContact.address.zip_code,
+	MailingState: vars.updatedContact.address.state,
+	MailingCountry: vars.updatedContact.address.country,
+	Phone: vars.updatedContact.phone
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<salesforce:update-single type="Contact"
+					doc:name="Update single" doc:id="f25ab2e0-07aa-458e-ab0d-2f709c519026"
+					config-ref="Salesforce_Config" />
+				<ee:transform doc:name="Create JSON response"
+					doc:id="709de452-74d1-4395-b466-19ef11bc1a7b"
+					xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Contact was updated",
+  id: payload.id
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus"><![CDATA[201]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Create JSON response"
+					doc:id="3fc530ed-e14c-4f16-a6ac-47c26d1457aa"
+					xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Resource not found"
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus"><![CDATA[404]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="deleteContactFlow" doc:id="b83ddcce-95a1-4997-a01e-7ac5a2fca166">
+		<salesforce:query doc:name="Query Contact ID by Email"
+			doc:id="8fbc4042-b891-4f49-a07b-cf92284caa7e" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query>SELECT Id FROM Contact WHERE Email =
+				':Email' Limit 1</salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output applicaton/java
+---
+{
+	"Email" : attributes.queryParams.email
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<choice doc:name="Does Contact Exist?" doc:id="cd5bd055-98a7-4246-a271-b386e7c8117c">
+			<when expression="#[sizeOf(payload) != 0]">
+				<logger level="INFO" doc:name="Logger"
+					doc:id="5c512df1-0371-400c-a3b6-556d2eda28a3"
+					message='Contact to delete: Id: #[payload.Id], Type: #[payload."type"] ' />
+				<salesforce:delete doc:name="Delete Contact by ID"
+					doc:id="a520bdce-697d-410a-866c-c93424c1f4a3" config-ref="Salesforce_Config">
+					<salesforce:delete-ids><![CDATA[#[payload.Id]]]></salesforce:delete-ids>
+				</salesforce:delete>
+				<ee:transform doc:name="Create JSON response"
+					doc:id="875a5d66-c669-4fe6-aabb-fad4433d09be"
+					xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Successfully deleted",
+  id: payload.id
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus"><![CDATA[201]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Create JSON response"
+					doc:id="3fc530ed-e14c-4f16-a6ac-47c26d1457aa"
+					xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Resource not found"
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus"><![CDATA[404]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</otherwise>
+		</choice>
+
+
+	</flow>
+</mule>

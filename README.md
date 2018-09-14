@@ -33,7 +33,7 @@ Look at the included self-descriptive RAML definition and the corresponding flow
 
 # Considerations <a name="considerations"/>
 
-To make this Anypoint Template run, there are certain preconditions that must be considered. **Failling to do so could lead to unexpected behavior of the template.**
+To make this Anypoint Template run, there are certain preconditions that must be considered. **Failing to do so could lead to unexpected behavior of the template.**
 
 ## APIs security considerations <a name="apissecurityconsiderations"/>
 This Process API is meant to be deployed to CloudHub and managed using the API Platform Manager.

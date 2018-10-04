@@ -25,7 +25,11 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 	<salesforce:sfdc-config name="Salesforce_Config"
 		doc:name="Salesforce Config" doc:id="dedd28e9-54c1-4fa1-9dc4-9abdfbc6c010">
 		<salesforce:basic-connection username="${sfdc.username}"
-			password="${sfdc.password}" securityToken="${sfdc.securityToken}" />
+			password="${sfdc.password}" securityToken="${sfdc.securityToken}" >
+			<reconnection >
+				<reconnect />
+			</reconnection>
+		</salesforce:basic-connection>
 	</salesforce:sfdc-config>
 	<tls:context name="TLS_Context" doc:name="TLS Context"
 		doc:id="1a87df8b-3531-40b4-8932-2f1918a6a9d6">

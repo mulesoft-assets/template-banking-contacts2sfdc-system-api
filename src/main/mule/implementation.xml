@@ -151,14 +151,14 @@ output application/java
 ---
 {	
 	Id: payload.Id[0],
-	(FirstName: vars.updatedContact.first_name) if (not isEmpty(vars.updatedContact.first_name)),
-	(LastName: vars.updatedContact.last_name) if (not isEmpty(vars.updatedContact.last_name)),
-	(MailingStreet: vars.updatedContact.address.address_line_1) if (not isEmpty(vars.updatedContact.address.address_line_1)),
-	(MailingCity: vars.updatedContact.address.city) if (not isEmpty(vars.updatedContact.address.city)),
-	(MailingPostalCode: vars.updatedContact.address.zip_code) if (not isEmpty(vars.updatedContact.address.zip_code)),
-	(MailingState: vars.updatedContact.address.state) if (not isEmpty(vars.updatedContact.address.state)),
-	(MailingCountry: vars.updatedContact.address.country) if (not isEmpty(vars.updatedContact.address.country)),
-	(Phone: vars.updatedContact.phone) if (not isEmpty(vars.updatedContact.phone))
+	FirstName: if (not isEmpty(vars.updatedContact.first_name)) vars.updatedContact.first_name else "",
+	LastName: if (not isEmpty(vars.updatedContact.last_name)) vars.updatedContact.last_name else "",
+	MailingStreet: if (not isEmpty(vars.updatedContact.address.address_line_1)) vars.updatedContact.address.address_line_1 else "",
+	MailingCity: if (not isEmpty(vars.updatedContact.address.city)) vars.updatedContact.address.city else "",
+	MailingPostalCode:  if (not isEmpty(vars.updatedContact.address.zip_code)) vars.updatedContact.address.zip_code else "",
+	MailingState:  if (not isEmpty(vars.updatedContact.address.state)) vars.updatedContact.address.state else "",
+	MailingCountry: if (not isEmpty(vars.updatedContact.address.country)) vars.updatedContact.address.country else "",
+	Phone: if (not isEmpty(vars.updatedContact.phone)) vars.updatedContact.phone else ""
 	
 }]]></ee:set-payload>
 					</ee:message>

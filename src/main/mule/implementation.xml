@@ -14,9 +14,9 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 			doc:id="8fbc4042-b891-4f49-a07b-cf92284caa7e" config-ref="Salesforce_Config">
 			<salesforce:salesforce-query>SELECT Id, FirstName, LastName,
 				MailingStreet, MailingCity, MailingPostalCode, MailingState,
-				MailingCountry, Phone, Email FROM Contact WHERE Email = ':Email'
+				MailingCountry, Phone, Email, Birthdate  FROM Contact WHERE Email = ':Email'
 			</salesforce:salesforce-query>
-			<salesforce:parameters><![CDATA[#[output applicaton/java
+			<salesforce:parameters><![CDATA[#[output application/java
 ---
 {
 	"Email" : attributes.queryParams.email
@@ -31,16 +31,20 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 output application/json
 ---
 payload map {
-	FirstName: $.FirstName,
-	LastName: $.LastName,
-	Address: {
-		street: $.MailingStreet,
+	id : $.Id,
+	first_name: $.FirstName,
+	last_name: $.LastName,
+	address: {
+		address_line_1: $.MailingStreet,
 		city: $.MailingCity,
-		zipCode: $.MailingPostalCode,
+		zip_code: $.MailingPostalCode,
 		state: $.MailingState,
 		country: $.MailingCountry
 	},
-	phone: $.Phone
+	display_name: $.FirstName! ++ " " ++ $.LastName!,
+	phone: $.Phone,
+	email: $.Email,
+	date_of_birth: $.Birthdate
 }]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
@@ -69,27 +73,30 @@ output application/json
 	</flow>
 
 	<flow name="postContactFlow">
-		<ee:transform doc:name="Map input to sfdc Account"
+		<ee:transform doc:name="Map input to sfdc Contact"
 			doc:id="182483b7-b5c8-434c-8864-d7cfbbc6ef39">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/java
 ---
-{
-	FirstName: payload.first_name,
-	LastName: payload.last_name,
-	MailingStreet: payload.address.address_line_1,
-	MailingCity: payload.address.city,
-	MailingPostalCode: payload.address.zip_code,
-	MailingState: payload.address.state,
-	MailingCountry: payload.address.country,
-	Phone: payload.phone,
-	Email: payload.email
+{	
+	(FirstName: payload.first_name) if (not isEmpty(payload.first_name)),
+	(LastName: payload.last_name) if (not isEmpty(payload.last_name)),
+	(MailingStreet: payload.address_line_1) if (not isEmpty(payload.address_line_1)),
+	(MailingCity: payload.address.city) if (not isEmpty(payload.address.city)),
+	(MailingPostalCode: payload.address.zip_code) if (not isEmpty(payload.address.zip_code)),
+	(MailingState: payload.address.state) if (not isEmpty(payload.address.state)),
+	(MailingCountry: payload.address.country) if (not isEmpty(payload.address.country)),
+	(Phone: payload.phone) if (not isEmpty(payload.phone)),
+	(Email: payload.email) if (not isEmpty(payload.email))
+	
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		<salesforce:create-single config-ref="Salesforce_Config"
-			type="Contact" doc:name="Create Account" doc:id="de62d54c-1bd9-44c1-a76d-e4de44993d50" />
+			type="Contact" doc:name="Create Contact" doc:id="de62d54c-1bd9-44c1-a76d-e4de44993d50" >
+			<reconnect-forever />
+		</salesforce:create-single>
 		<logger level="INFO" doc:name="Logger"
 			doc:id="5d0464aa-efa8-4c1e-95d8-5562e2c001b6" message="#[output application/json --- payload]" />
 		<ee:transform doc:name="Create JSON response"
@@ -144,20 +151,22 @@ output application/java
 ---
 {	
 	Id: payload.Id[0],
-    FirstName: vars.updatedContact.first_name,
-	LastName: vars.updatedContact.last_name,
-	MailingStreet: vars.updatedContact.address.address_line_1,
-	MailingCity: vars.updatedContact.address.city,
-	MailingPostalCode: vars.updatedContact.address.zip_code,
-	MailingState: vars.updatedContact.address.state,
-	MailingCountry: vars.updatedContact.address.country,
-	Phone: vars.updatedContact.phone
+	FirstName: if (not isEmpty(vars.updatedContact.first_name)) vars.updatedContact.first_name else "",
+	LastName: if (not isEmpty(vars.updatedContact.last_name)) vars.updatedContact.last_name else "",
+	MailingStreet: if (not isEmpty(vars.updatedContact.address.address_line_1)) vars.updatedContact.address.address_line_1 else "",
+	MailingCity: if (not isEmpty(vars.updatedContact.address.city)) vars.updatedContact.address.city else "",
+	MailingPostalCode:  if (not isEmpty(vars.updatedContact.address.zip_code)) vars.updatedContact.address.zip_code else "",
+	MailingState:  if (not isEmpty(vars.updatedContact.address.state)) vars.updatedContact.address.state else "",
+	MailingCountry: if (not isEmpty(vars.updatedContact.address.country)) vars.updatedContact.address.country else "",
+	Phone: if (not isEmpty(vars.updatedContact.phone)) vars.updatedContact.phone else ""
+	
 }]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
 				<salesforce:update-single type="Contact"
-					doc:name="Update single" doc:id="f25ab2e0-07aa-458e-ab0d-2f709c519026"
+					doc:name="Update Contact" doc:id="f25ab2e0-07aa-458e-ab0d-2f709c519026"
 					config-ref="Salesforce_Config" />
+				<logger level="INFO" doc:name="Logger" doc:id="17b08de1-6899-47f3-95c9-f9c5b149182a" message="#[output application/json --- payload]"/>
 				<ee:transform doc:name="Create JSON response"
 					doc:id="709de452-74d1-4395-b466-19ef11bc1a7b"
 					xsi:schemaLocation="
@@ -167,7 +176,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 output application/json
 ---
 {
-  message: "Contact was updated",
+  message: if(isEmpty(payload.errors))"Contact was updated" else payload.errors,
   id: payload.id
 }]]></ee:set-payload>
 					</ee:message>

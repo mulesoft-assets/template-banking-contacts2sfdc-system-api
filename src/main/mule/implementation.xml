@@ -82,7 +82,7 @@ output application/java
 {	
 	(FirstName: payload.first_name) if (not isEmpty(payload.first_name)),
 	(LastName: payload.last_name) if (not isEmpty(payload.last_name)),
-	(MailingStreet: payload.address_line_1) if (not isEmpty(payload.address_line_1)),
+	(MailingStreet: payload.address.address_line_1) if (not isEmpty(payload.address.address_line_1)),
 	(MailingCity: payload.address.city) if (not isEmpty(payload.address.city)),
 	(MailingPostalCode: payload.address.zip_code) if (not isEmpty(payload.address.zip_code)),
 	(MailingState: payload.address.state) if (not isEmpty(payload.address.state)),

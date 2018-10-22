@@ -30,21 +30,21 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 						<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
-payload map {
-	id : $.Id,
-	first_name: $.FirstName,
-	last_name: $.LastName,
+{	
+	id : payload[0].Id,
+	first_name: payload[0].FirstName,
+	last_name: payload[0].LastName,
 	address: {
-		address_line_1: $.MailingStreet,
-		city: $.MailingCity,
-		zip_code: $.MailingPostalCode,
-		state: $.MailingState,
-		country: $.MailingCountry
+		address_line_1: payload[0].MailingStreet,
+		city: payload[0].MailingCity,
+		zip_code: payload[0].MailingPostalCode,
+		state: payload[0].MailingState,
+		country: payload[0].MailingCountry
 	},
-	display_name: $.FirstName! ++ " " ++ $.LastName!,
-	phone: $.Phone,
-	email: $.Email,
-	date_of_birth: $.Birthdate
+	display_name: payload[0].FirstName! ++ " " ++ payload[0].LastName!,
+	phone: payload[0].Phone,
+	email: payload[0].Email,
+	date_of_birth: payload[0].Birthdate
 }]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>

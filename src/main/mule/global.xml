@@ -12,6 +12,9 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 	http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 	http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
 
+	<global-property doc:name="Global Property" name="mule.env"
+		value="dev" />
+
 	<http:listener-config name="banking_contact_system_api-httpListenerConfig">
 		<http:listener-connection host="0.0.0.0"
 			port="${https.port}" tlsContext="TLS_Context" protocol="HTTPS">
@@ -40,7 +43,5 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 		doc:id="3f8e1fb3-5d4e-4016-a78a-5dc6d213111d" file="mule.${mule.env}.properties" />
 	<configuration-properties doc:name="Configuration properties"
 		doc:id="7a61e8bb-6e38-4be7-b8a7-c9e552ef8db1" file="common.properties" />
-	<global-property doc:name="Global Property" name="mule.env"
-		value="dev" />
-
+		
 </mule>
